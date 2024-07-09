@@ -1,0 +1,36 @@
+name: Build Linux core
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up GCC
+        uses: egor-tensin/setup-gcc@v1
+        with:
+          version: 4.8
+          platform: x64
+
+      - name: Initialize
+        run: |
+          sudo apt install libncurses5-dev -y
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- sun5i_defconfig
+
+      - name: Build
+        run: |
+          make -j$(nproc) ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- uImage modules
+          make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- INSTALL_MOD_PATH=output modules_install
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
